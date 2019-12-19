@@ -5,8 +5,10 @@ defmodule ErleansProviderEctoTest do
   alias ErleansProviderEcto.Grain, as: Grain
 
   setup do
+    repo = :myrepo
+
     ErleansProviderEcto.Repo.start_link(
-      name: :myrepo,
+      name: repo,
       database: "test",
       username: "test",
       hostname: "localhost",
@@ -14,24 +16,28 @@ defmodule ErleansProviderEctoTest do
       adapter: Ecto.Adapters.Postgres
     )
 
-    Ecto.Adapters.SQL.Sandbox.mode(:myrepo, :manual)
+    Ecto.Adapters.SQL.Sandbox.mode(repo, :manual)
 
-    ErleansProviderEcto.Repo.put_dynamic_repo(:myrepo)
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(:myrepo)
+    ErleansProviderEcto.Repo.put_dynamic_repo(repo)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(repo)
+
+    {:ok, repo: repo}
   end
 
-  test "basic insert of grain" do
+  test "basic insert of grain", state do
+    repo = state[:repo]
+
     id = "hello"
     type = "test-grain"
-    repo = :myrepo
 
     result = ErleansProviderEcto.insert(id, repo, type, "state", 0)
 
     assert {:ok, _} = result
   end
 
-  test "invalid data returns error changeset" do
-    ErleansProviderEcto.Repo.put_dynamic_repo(:myrepo)
+  test "invalid data returns error changeset", state do
+    repo = state[:repo]
+    ErleansProviderEcto.Repo.put_dynamic_repo(repo)
 
     id = "failing-grain"
     type = "missing-etag"
@@ -53,8 +59,8 @@ defmodule ErleansProviderEctoTest do
     assert {:error, %Ecto.Changeset{errors: ^expected_error}} = result
   end
 
-  test "compare and swap grain state" do
-    repo = :myrepo
+  test "compare and swap grain state", state do
+    repo = state[:repo]
     ErleansProviderEcto.Repo.put_dynamic_repo(repo)
     type = "test-grain"
     id = "hello"
