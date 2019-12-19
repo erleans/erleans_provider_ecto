@@ -23,7 +23,7 @@ defmodule ErleansProviderEctoTest do
   test "basic insert of grain" do
     id = "hello"
     type = "test-grain"
-    repo = ErleansProviderEcto.Repo
+    repo = :myrepo
 
     result = ErleansProviderEcto.insert(id, repo, type, "state", 0)
 
@@ -31,6 +31,8 @@ defmodule ErleansProviderEctoTest do
   end
 
   test "invalid data returns error changeset" do
+    ErleansProviderEcto.Repo.put_dynamic_repo(:myrepo)
+
     id = "failing-grain"
     type = "missing-etag"
     ref_hash = ErleansProviderEcto.Grain.ref_hash(id, type)
@@ -52,7 +54,8 @@ defmodule ErleansProviderEctoTest do
   end
 
   test "compare and swap grain state" do
-    repo = ErleansProviderEcto.Repo
+    repo = :myrepo
+    ErleansProviderEcto.Repo.put_dynamic_repo(repo)
     type = "test-grain"
     id = "hello"
 
