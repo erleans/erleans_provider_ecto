@@ -3,21 +3,32 @@ defmodule ErleansProviderEcto.Grain do
 
   @primary_key false
   schema "grain" do
-    field :grain_id, :binary, primary_key: true
-    field :grain_type, :string, primary_key: true
-    field :grain_ref_hash, :integer
-    field :grain_etag, :integer
-    field :grain_state, :binary
+    field(:grain_id, :binary, primary_key: true)
+    field(:grain_type, :string, primary_key: true)
+    field(:grain_ref_hash, :integer)
+    field(:grain_etag, :integer)
+    field(:grain_state, :binary)
     timestamps()
   end
 
   def changeset(grain, params \\ %{}) do
     grain
-    |> Ecto.Changeset.cast(params, [:grain_id, :grain_type, :grain_ref_hash, :grain_etag, :grain_state])
-    |> Ecto.Changeset.validate_required([:grain_id, :grain_type, :grain_ref_hash, :grain_etag, :grain_state])
+    |> Ecto.Changeset.cast(params, [
+      :grain_id,
+      :grain_type,
+      :grain_ref_hash,
+      :grain_etag,
+      :grain_state
+    ])
+    |> Ecto.Changeset.validate_required([
+      :grain_id,
+      :grain_type,
+      :grain_ref_hash,
+      :grain_etag,
+      :grain_state
+    ])
     |> Ecto.Changeset.validate_length(:grain_type, max: 2048)
   end
-
 
   # def ref_hash(changeset) do
   #   id = Ecto.Changeset.get_change(changeset, :grain_id)

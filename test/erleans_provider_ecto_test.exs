@@ -5,7 +5,15 @@ defmodule ErleansProviderEctoTest do
   alias ErleansProviderEcto.Grain, as: Grain
 
   setup do
-    ErleansProviderEcto.Repo.start_link(name: :myrepo, database: "test", username: "test", hostname: "localhost", pool: Ecto.Adapters.SQL.Sandbox, adapter: Ecto.Adapters.Postgres)
+    ErleansProviderEcto.Repo.start_link(
+      name: :myrepo,
+      database: "test",
+      username: "test",
+      hostname: "localhost",
+      pool: Ecto.Adapters.SQL.Sandbox,
+      adapter: Ecto.Adapters.Postgres
+    )
+
     Ecto.Adapters.SQL.Sandbox.mode(:myrepo, :manual)
 
     ErleansProviderEcto.Repo.put_dynamic_repo(:myrepo)
@@ -26,14 +34,18 @@ defmodule ErleansProviderEctoTest do
     id = "failing-grain"
     type = "missing-etag"
     ref_hash = ErleansProviderEcto.Grain.ref_hash(id, type)
-    missing_etag = %Grain{grain_id: id,
-                          grain_type: type,
-                          grain_ref_hash: ref_hash,
-                          grain_state: "state"}
 
-    result = missing_etag |>
-      ErleansProviderEcto.Grain.changeset() |>
-      ErleansProviderEcto.Repo.insert()
+    missing_etag = %Grain{
+      grain_id: id,
+      grain_type: type,
+      grain_ref_hash: ref_hash,
+      grain_state: "state"
+    }
+
+    result =
+      missing_etag
+      |> ErleansProviderEcto.Grain.changeset()
+      |> ErleansProviderEcto.Repo.insert()
 
     expected_error = [grain_etag: {"can't be blank", [validation: :required]}]
     assert {:error, %Ecto.Changeset{errors: ^expected_error}} = result
@@ -43,15 +55,19 @@ defmodule ErleansProviderEctoTest do
     repo = ErleansProviderEcto.Repo
     type = "test-grain"
     id = "hello"
-    g = %ErleansProviderEcto.Grain{grain_id: id,
-                                   grain_type: type,
-                                   grain_ref_hash: ErleansProviderEcto.Grain.ref_hash(id, type),
-                                   grain_etag: 0,
-                                   grain_state: "state"}
 
-    result = g |>
-      ErleansProviderEcto.Grain.changeset() |>
-      ErleansProviderEcto.Repo.insert()
+    g = %ErleansProviderEcto.Grain{
+      grain_id: id,
+      grain_type: type,
+      grain_ref_hash: ErleansProviderEcto.Grain.ref_hash(id, type),
+      grain_etag: 0,
+      grain_state: "state"
+    }
+
+    result =
+      g
+      |> ErleansProviderEcto.Grain.changeset()
+      |> ErleansProviderEcto.Repo.insert()
 
     assert {:ok, _} = result
 
@@ -62,7 +78,9 @@ defmodule ErleansProviderEctoTest do
     new_etag = 1
     ErleansProviderEcto.update(type, repo, id, new_state, etag, new_etag)
 
-    {:ok, %ErleansProviderEcto.Grain{grain_etag: check_etag}} = ErleansProviderEcto.read(type, repo, id)
+    {:ok, %ErleansProviderEcto.Grain{grain_etag: check_etag}} =
+      ErleansProviderEcto.read(type, repo, id)
+
     assert 1 = check_etag
   end
 end
