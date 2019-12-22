@@ -8,6 +8,10 @@ defmodule ErleansProviderEcto do
 
   # @behaviour :erleans_provider
 
+  def start_link(name, opts) do
+    ErleansProviderEcto.Repo.start_link([{:name, name} | opts])
+  end
+
   def all(type, repo) do
     ErleansProviderEcto.Repo.put_dynamic_repo(repo)
     ErleansProviderEcto.Repo.all(Ecto.Query.from(g in Grain, where: g.grain_type == ^type))

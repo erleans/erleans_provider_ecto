@@ -7,13 +7,20 @@ defmodule ErleansProviderEctoTest do
   setup do
     repo = :myrepo
 
-    ErleansProviderEcto.Repo.start_link(
-      name: repo,
+    ErleansProviderEcto.start_link(repo,
       database: "test",
       username: "test",
       hostname: "localhost",
       pool: Ecto.Adapters.SQL.Sandbox,
       adapter: Ecto.Adapters.Postgres
+    )
+
+    Ecto.Migrator.run(
+      ErleansProviderEcto.Repo,
+      "priv/repo/migrations",
+      :up,
+      dynamic_repo: repo,
+      all: true
     )
 
     Ecto.Adapters.SQL.Sandbox.mode(repo, :manual)

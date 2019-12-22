@@ -1,4 +1,4 @@
-defmodule Erleans.Provider.Ecto.Repo.Migrations.CreateGrain do
+defmodule ErleansProviderEcto.Repo.Migrations.CreateGrain do
   use Ecto.Migration
 
   def change do
