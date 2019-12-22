@@ -16,8 +16,8 @@ defmodule ErleansProviderEctoTest do
     )
 
     Ecto.Migrator.run(
-      ErleansProviderEcto.Repo,
-      "priv/repo/migrations",
+      ErleansProviderEcto.PostgresRepo,
+      "priv/postgres_repo/migrations",
       :up,
       dynamic_repo: repo,
       all: true
@@ -31,7 +31,7 @@ defmodule ErleansProviderEctoTest do
 
     Ecto.Adapters.SQL.Sandbox.mode(repo, :manual)
 
-    ErleansProviderEcto.Repo.put_dynamic_repo(repo)
+    ErleansProviderEcto.PostgresRepo.put_dynamic_repo(repo)
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(repo)
 
     {:ok, repo: repo}
@@ -39,7 +39,7 @@ defmodule ErleansProviderEctoTest do
 
   test "invalid data returns error changeset", state do
     repo = state[:repo]
-    ErleansProviderEcto.Repo.put_dynamic_repo(repo)
+    ErleansProviderEcto.PostgresRepo.put_dynamic_repo(repo)
 
     id = "failing-grain"
     type = MissingEtag
@@ -55,7 +55,7 @@ defmodule ErleansProviderEctoTest do
     result =
       missing_etag
       |> ErleansProviderEcto.Grain.changeset()
-      |> ErleansProviderEcto.Repo.insert()
+      |> ErleansProviderEcto.PostgresRepo.insert()
 
     expected_error = [grain_etag: {"can't be blank", [validation: :required]}]
     assert {:error, %Ecto.Changeset{errors: ^expected_error}} = result
@@ -74,7 +74,7 @@ defmodule ErleansProviderEctoTest do
 
   test "compare and swap grain state", state do
     repo = state[:repo]
-    ErleansProviderEcto.Repo.put_dynamic_repo(repo)
+    ErleansProviderEcto.PostgresRepo.put_dynamic_repo(repo)
 
     id = "hello"
     type = TestGrain
@@ -90,7 +90,7 @@ defmodule ErleansProviderEctoTest do
     result =
       g
       |> ErleansProviderEcto.Grain.changeset()
-      |> ErleansProviderEcto.Repo.insert()
+      |> ErleansProviderEcto.PostgresRepo.insert()
 
     assert {:ok, _} = result
 

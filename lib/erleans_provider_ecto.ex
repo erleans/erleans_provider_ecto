@@ -9,18 +9,18 @@ defmodule ErleansProviderEcto do
   # @behaviour :erleans_provider
 
   def start_link(name, opts) do
-    ErleansProviderEcto.Repo.start_link([{:name, name} | opts])
+    ErleansProviderEcto.PostgresRepo.start_link([{:name, name} | opts])
   end
 
   def all(type, repo) do
-    ErleansProviderEcto.Repo.put_dynamic_repo(repo)
-    ErleansProviderEcto.Repo.all(Ecto.Query.from(g in Grain, where: g.grain_type == ^type))
+    ErleansProviderEcto.PostgresRepo.put_dynamic_repo(repo)
+    ErleansProviderEcto.PostgresRepo.all(Ecto.Query.from(g in Grain, where: g.grain_type == ^type))
   end
 
   def read(type, repo, id) do
-    ErleansProviderEcto.Repo.put_dynamic_repo(repo)
+    ErleansProviderEcto.PostgresRepo.put_dynamic_repo(repo)
 
-    case ErleansProviderEcto.Repo.get_by(Grain, grain_id: id, grain_type: type) do
+    case ErleansProviderEcto.PostgresRepo.get_by(Grain, grain_id: id, grain_type: type) do
       nil ->
         {:error, :not_found}
 
@@ -30,9 +30,9 @@ defmodule ErleansProviderEcto do
   end
 
   def read_by_hash(type, repo, hash) do
-    ErleansProviderEcto.Repo.put_dynamic_repo(repo)
+    ErleansProviderEcto.PostgresRepo.put_dynamic_repo(repo)
 
-    case ErleansProviderEcto.Repo.get_by(Grain, grain_type: type, grain_etag: hash) do
+    case ErleansProviderEcto.PostgresRepo.get_by(Grain, grain_type: type, grain_etag: hash) do
       nil ->
         {:error, :not_found}
 
@@ -46,7 +46,7 @@ defmodule ErleansProviderEcto do
   end
 
   def insert(type, repo, id, hash, state, etag) do
-    ErleansProviderEcto.Repo.put_dynamic_repo(repo)
+    ErleansProviderEcto.PostgresRepo.put_dynamic_repo(repo)
 
     %Grain{
       grain_id: id,
@@ -56,7 +56,7 @@ defmodule ErleansProviderEcto do
       grain_state: state
     }
     |> Grain.changeset()
-    |> ErleansProviderEcto.Repo.insert()
+    |> ErleansProviderEcto.PostgresRepo.insert()
   end
 
   def update(type, repo, id, state, etag, new_etag) do
@@ -64,9 +64,9 @@ defmodule ErleansProviderEcto do
   end
 
   def update(type, repo, id, hash, state, etag, new_etag) do
-    ErleansProviderEcto.Repo.put_dynamic_repo(repo)
+    ErleansProviderEcto.PostgresRepo.put_dynamic_repo(repo)
 
-    ErleansProviderEcto.Repo.update_all(
+    ErleansProviderEcto.PostgresRepo.update_all(
       Ecto.Query.from(g in Grain,
         where:
           g.grain_ref_hash == ^hash and
