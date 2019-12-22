@@ -4,7 +4,7 @@ defmodule ErleansProviderEctoTest do
 
   alias ErleansProviderEcto.Grain, as: Grain
 
-  setup do
+  setup_all do
     repo = :myrepo
 
     ErleansProviderEcto.start_link(repo,
@@ -23,23 +23,18 @@ defmodule ErleansProviderEctoTest do
       all: true
     )
 
+    [repo: repo]
+  end
+
+  setup state do
+    repo = state[:repo]
+
     Ecto.Adapters.SQL.Sandbox.mode(repo, :manual)
 
     ErleansProviderEcto.Repo.put_dynamic_repo(repo)
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(repo)
 
     {:ok, repo: repo}
-  end
-
-  test "basic insert of grain", state do
-    repo = state[:repo]
-
-    id = "hello"
-    type = TestGrain
-
-    result = ErleansProviderEcto.insert(type, repo, id, "state", 0)
-
-    assert {:ok, _} = result
   end
 
   test "invalid data returns error changeset", state do
@@ -64,6 +59,17 @@ defmodule ErleansProviderEctoTest do
 
     expected_error = [grain_etag: {"can't be blank", [validation: :required]}]
     assert {:error, %Ecto.Changeset{errors: ^expected_error}} = result
+  end
+
+  test "basic insert of grain", state do
+    repo = state[:repo]
+
+    id = "hello"
+    type = TestGrain
+
+    result = ErleansProviderEcto.insert(type, repo, id, "state", 0)
+
+    assert {:ok, _} = result
   end
 
   test "compare and swap grain state", state do

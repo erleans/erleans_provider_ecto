@@ -12,6 +12,7 @@ defmodule ErleansProviderEcto.Grain do
   end
 
   def changeset(grain, params \\ %{}) do
+    # TODO: Validate phash2 of id/type and ref_hash match
     grain
     |> Ecto.Changeset.cast(params, [
       :grain_id,
@@ -29,12 +30,6 @@ defmodule ErleansProviderEcto.Grain do
     ])
     |> Ecto.Changeset.validate_length(:grain_type, max: 2048)
   end
-
-  # def ref_hash(changeset) do
-  #   id = Ecto.Changeset.get_change(changeset, :grain_id)
-  #   type = Ecto.Changeset.get_change(changeset, :grain_type)
-  #   Ecto.Changeset.put_change(changeset, :grain_ref_hash, ref_hash(id, type))
-  # end
 
   def ref_hash(id, type) do
     :erlang.phash2({id, type})

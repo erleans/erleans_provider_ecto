@@ -42,12 +42,16 @@ defmodule ErleansProviderEcto do
   end
 
   def insert(type, repo, id, state, etag) do
+    insert(type, repo, id, Grain.ref_hash(id, type), state, etag)
+  end
+
+  def insert(type, repo, id, hash, state, etag) do
     ErleansProviderEcto.Repo.put_dynamic_repo(repo)
 
     %Grain{
       grain_id: id,
       grain_type: type,
-      grain_ref_hash: Grain.ref_hash(id, type),
+      grain_ref_hash: hash,
       grain_etag: etag,
       grain_state: state
     }
@@ -55,13 +59,12 @@ defmodule ErleansProviderEcto do
     |> ErleansProviderEcto.Repo.insert()
   end
 
-  def insert(_type, _repo, _id, _hash, _state, _etag) do
-    # ErleansProviderEcto.Repo.put_dynamic_repo(repo)
+  def update(type, repo, id, state, etag, new_etag) do
+    update(type, repo, id, Grain.ref_hash(id, type), state, etag, new_etag)
   end
 
-  def update(type, repo, id, state, etag, new_etag) do
+  def update(type, repo, id, hash, state, etag, new_etag) do
     ErleansProviderEcto.Repo.put_dynamic_repo(repo)
-    hash = Grain.ref_hash(id, type)
 
     ErleansProviderEcto.Repo.update_all(
       Ecto.Query.from(g in Grain,
@@ -81,9 +84,5 @@ defmodule ErleansProviderEcto do
       []
     )
     :ok
-  end
-
-  def update(_type, _repo, _id, _hash, _state, _etag, _new_etag) do
-    # ErleansProviderEcto.Repo.put_dynamic_repo(repo)
   end
 end
