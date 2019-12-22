@@ -3,11 +3,11 @@ defmodule ErleansProviderEcto.Grain do
 
   @primary_key false
   schema "grain" do
-    field(:grain_id, :binary, primary_key: true)
-    field(:grain_type, :string, primary_key: true)
+    field(:grain_id, ErleansProviderEcto.GrainId, primary_key: true)
+    field(:grain_type, ErleansProviderEcto.GrainType, primary_key: true)
     field(:grain_ref_hash, :integer)
     field(:grain_etag, :integer)
-    field(:grain_state, :binary)
+    field(:grain_state, ErleansProviderEcto.GrainState)
     timestamps()
   end
 

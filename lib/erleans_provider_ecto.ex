@@ -80,6 +80,7 @@ defmodule ErleansProviderEcto do
       ),
       []
     )
+    :ok
   end
 
   def update(_type, _repo, _id, _hash, _state, _etag, _new_etag) do

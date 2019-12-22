@@ -35,9 +35,9 @@ defmodule ErleansProviderEctoTest do
     repo = state[:repo]
 
     id = "hello"
-    type = "test-grain"
+    type = TestGrain
 
-    result = ErleansProviderEcto.insert(id, repo, type, "state", 0)
+    result = ErleansProviderEcto.insert(type, repo, id, "state", 0)
 
     assert {:ok, _} = result
   end
@@ -47,7 +47,7 @@ defmodule ErleansProviderEctoTest do
     ErleansProviderEcto.Repo.put_dynamic_repo(repo)
 
     id = "failing-grain"
-    type = "missing-etag"
+    type = MissingEtag
     ref_hash = ErleansProviderEcto.Grain.ref_hash(id, type)
 
     missing_etag = %Grain{
@@ -69,8 +69,9 @@ defmodule ErleansProviderEctoTest do
   test "compare and swap grain state", state do
     repo = state[:repo]
     ErleansProviderEcto.Repo.put_dynamic_repo(repo)
-    type = "test-grain"
+
     id = "hello"
+    type = TestGrain
 
     g = %ErleansProviderEcto.Grain{
       grain_id: id,
