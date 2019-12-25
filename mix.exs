@@ -19,8 +19,9 @@ defmodule ErleansProviderEcto.MixProject do
 
   defp deps do
     [
-      {:postgrex, "~> 0.15.3"},
-      {:ecto_sql, "~> 3.0"}
+      {:postgrex, "~> 0.15.3", optional: true},
+      {:myxql, "~> 0.3.1", optional: true},
+      {:ecto_sql, "~> 3.3.2", optional: true}
     ]
   end
 end

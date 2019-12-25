@@ -19,7 +19,17 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
         env:
           POSTGRES_USER: test
-          POSTGRES_DB: test
+          POSTGRES_DB: testdb
+      mysql:
+        image: mysql:5
+        env:
+          MYSQL_DATABASE: testdb
+          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+          MYSQL_USER: test
+          MYSQL_PASSWORD: test
+        ports:
+        - 3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
     - uses: actions/checkout@v1.0.0
@@ -27,6 +37,11 @@ jobs:
       with:
         otp-version: 22.x
         elixir-version: 1.9.x
+    - name: Wait for mysql
+      run: |
+        while ! mysqladmin ping -h"127.0.0.1" -P 3306 --silent; do
+          sleep 1
+        done
     - name: Fetch deps
       run: mix deps.get
     - name: Run tests

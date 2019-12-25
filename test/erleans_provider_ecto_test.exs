@@ -1,109 +1,130 @@
 defmodule ErleansProviderEctoTest do
   use ExUnit.Case
-  doctest ErleansProviderEcto
 
   alias ErleansProviderEcto.Grain, as: Grain
 
-  setup_all do
-    repo = :myrepo
+  @configs [
+    {:pgrepo, ErleansProviderEcto.Postgres, ErleansProviderEcto.PostgresRepo,
+     "priv/postgres_repo/migrations"}# ,
+    # {:myrepo, ErleansProviderEcto.MySQL, ErleansProviderEcto.MySQLRepo,
+    #  "priv/mysql_repo/migrations"}
+  ]
 
-    ErleansProviderEcto.start_link(repo,
-      database: "test",
-      username: "test",
-      hostname: "localhost",
-      pool: Ecto.Adapters.SQL.Sandbox,
-      adapter: Ecto.Adapters.Postgres
-    )
+  def init_sandbox(state) do
+    {repo_name, provider_module, repo_module} = state[:repo]
 
-    Ecto.Migrator.run(
-      ErleansProviderEcto.PostgresRepo,
-      "priv/postgres_repo/migrations",
-      :up,
-      dynamic_repo: repo,
-      all: true
-    )
+    Ecto.Adapters.SQL.Sandbox.mode(repo_name, :manual)
 
-    [repo: repo]
+    repo_module.put_dynamic_repo(repo_name)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(repo_name)
+
+    {:ok, repo: {repo_name, provider_module, repo_module}}
   end
 
-  setup state do
-    repo = state[:repo]
+  @configs
+  |> Enum.each(fn {repo_name, provider_module, repo_module, migrations_dir} ->
+    describe "#{provider_module} tests" do
+      setup do
+        {repo_name, provider_module, repo_module, migrations_dir} =
+          {unquote(repo_name), unquote(provider_module), unquote(repo_module),
+           unquote(migrations_dir)}
 
-    Ecto.Adapters.SQL.Sandbox.mode(repo, :manual)
+        provider_module.start_link(repo_name,
+          database: "testdb",
+          username: "test",
+          password: "test",
+          hostname: "127.0.0.1",
+          protocol: :tcp,
+          pool: Ecto.Adapters.SQL.Sandbox,
+          adapter: Ecto.Adapters.Postgres
+        )
 
-    ErleansProviderEcto.PostgresRepo.put_dynamic_repo(repo)
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(repo)
+        Ecto.Migrator.run(
+          repo_module,
+          migrations_dir,
+          :up,
+          dynamic_repo: repo_name,
+          all: true
+        )
 
-    {:ok, repo: repo}
-  end
+        [repo: {repo_name, provider_module, repo_module}]
+      end
 
-  test "invalid data returns error changeset", state do
-    repo = state[:repo]
-    ErleansProviderEcto.PostgresRepo.put_dynamic_repo(repo)
+      test "invalid data returns error changeset", state do
+        init_sandbox(state)
 
-    id = "failing-grain"
-    type = MissingEtag
-    ref_hash = ErleansProviderEcto.Grain.ref_hash(id, type)
+        {repo_name, _provider_module, repo_module} = state[:repo]
+        repo_module.put_dynamic_repo(repo_name)
 
-    missing_etag = %Grain{
-      grain_id: id,
-      grain_type: type,
-      grain_ref_hash: ref_hash,
-      grain_state: "state"
-    }
+        id = "failing-grain"
+        type = MissingEtag
+        ref_hash = ErleansProviderEcto.Grain.ref_hash(id, type)
 
-    result =
-      missing_etag
-      |> ErleansProviderEcto.Grain.changeset()
-      |> ErleansProviderEcto.PostgresRepo.insert()
+        missing_etag = %Grain{
+          grain_id: id,
+          grain_type: type,
+          grain_ref_hash: ref_hash,
+          grain_state: "state"
+        }
 
-    expected_error = [grain_etag: {"can't be blank", [validation: :required]}]
-    assert {:error, %Ecto.Changeset{errors: ^expected_error}} = result
-  end
+        result =
+          missing_etag
+          |> ErleansProviderEcto.Grain.changeset()
+          |> repo_module.insert()
 
-  test "basic insert of grain", state do
-    repo = state[:repo]
+        expected_error = [grain_etag: {"can't be blank", [validation: :required]}]
+        assert {:error, %Ecto.Changeset{errors: ^expected_error}} = result
+      end
 
-    id = "hello"
-    type = TestGrain
+      test "basic insert of grain", state do
+        init_sandbox(state)
+        {repo_name, provider_module, _repo_module} = state[:repo]
 
-    result = ErleansProviderEcto.insert(type, repo, id, "state", 0)
+        id = "hello"
+        type = TestGrain
 
-    assert {:ok, _} = result
-  end
+        result = provider_module.insert(type, repo_name, id, "state", 0)
 
-  test "compare and swap grain state", state do
-    repo = state[:repo]
-    ErleansProviderEcto.PostgresRepo.put_dynamic_repo(repo)
+        assert {:ok, _} = result
+      end
 
-    id = "hello"
-    type = TestGrain
+      test "compare and swap grain state", state do
+        init_sandbox(state)
+        {repo_name, provider_module, repo_module} = state[:repo]
+        repo_module.put_dynamic_repo(repo_name)
 
-    g = %ErleansProviderEcto.Grain{
-      grain_id: id,
-      grain_type: type,
-      grain_ref_hash: ErleansProviderEcto.Grain.ref_hash(id, type),
-      grain_etag: 0,
-      grain_state: "state"
-    }
+        id = "hello"
+        type = TestGrain
 
-    result =
-      g
-      |> ErleansProviderEcto.Grain.changeset()
-      |> ErleansProviderEcto.PostgresRepo.insert()
+        g = %ErleansProviderEcto.Grain{
+          grain_id: id,
+          grain_type: type,
+          grain_ref_hash: ErleansProviderEcto.Grain.ref_hash(id, type),
+          grain_etag: 0,
+          grain_state: "state"
+        }
 
-    assert {:ok, _} = result
+        result =
+          g
+          |> ErleansProviderEcto.Grain.changeset()
+          |> repo_module.insert()
 
-    {:ok, %ErleansProviderEcto.Grain{grain_etag: etag}} = ErleansProviderEcto.read(type, repo, id)
-    assert 0 = etag
+        assert {:ok, _} = result
 
-    new_state = "hello"
-    new_etag = 1
-    ErleansProviderEcto.update(type, repo, id, new_state, etag, new_etag)
+        {:ok, %ErleansProviderEcto.Grain{grain_etag: etag}} =
+          provider_module.read(type, repo_name, id)
 
-    {:ok, %ErleansProviderEcto.Grain{grain_etag: check_etag}} =
-      ErleansProviderEcto.read(type, repo, id)
+        assert 0 = etag
 
-    assert 1 = check_etag
-  end
+        new_state = "hello"
+        new_etag = 1
+        provider_module.update(type, repo_name, id, new_state, etag, new_etag)
+
+        {:ok, %ErleansProviderEcto.Grain{grain_etag: check_etag}} =
+          provider_module.read(type, repo_name, id)
+
+        assert 1 = check_etag
+      end
+    end
+  end)
 end
