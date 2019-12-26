@@ -5,9 +5,14 @@ defmodule ErleansProviderEctoTest do
 
   @configs [
     {:pgrepo, ErleansProviderEcto.Postgres, ErleansProviderEcto.PostgresRepo,
-     "priv/postgres_repo/migrations"}# ,
-    # {:myrepo, ErleansProviderEcto.MySQL, ErleansProviderEcto.MySQLRepo,
-    #  "priv/mysql_repo/migrations"}
+     "priv/postgres_repo/migrations"} |
+    case System.get_env("GITHUB_ACTIONS", nil) do
+      nil ->
+        [{:myrepo, ErleansProviderEcto.MySQL, ErleansProviderEcto.MySQLRepo,
+          "priv/mysql_repo/migrations"}]
+      _ ->
+        []
+    end
   ]
 
   def init_sandbox(state) do

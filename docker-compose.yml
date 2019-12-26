@@ -17,5 +17,13 @@ services:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
       MYSQL_USER: test
       MYSQL_PASSWORD: test
+    volumes:
+      - data:/var/lib/mysql
     ports:
       - 3306:3306
+
+volumes:
+  data:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
