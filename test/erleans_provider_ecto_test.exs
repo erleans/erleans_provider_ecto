@@ -116,7 +116,7 @@ defmodule ErleansProviderEctoTest do
 
         assert {:ok, _} = result
 
-        {:ok, %ErleansProviderEcto.Grain{grain_etag: etag}} =
+        {:ok, _, etag} =
           provider_module.read(type, repo_name, id)
 
         assert 0 = etag
@@ -125,7 +125,7 @@ defmodule ErleansProviderEctoTest do
         new_etag = 1
         provider_module.update(type, repo_name, id, new_state, etag, new_etag)
 
-        {:ok, %ErleansProviderEcto.Grain{grain_etag: check_etag}} =
+        {:ok, _, check_etag} =
           provider_module.read(type, repo_name, id)
 
         assert 1 = check_etag

@@ -24,8 +24,8 @@ defmodule ErleansProviderEcto do
       nil ->
         {:error, :not_found}
 
-      grains ->
-        {:ok, grains}
+      %{:grain_etag => etag, :grain_state => state} ->
+        {:ok, state, etag}
     end
   end
 
